@@ -6,31 +6,25 @@ window.addEventListener("load", function() {
     "chrome://downloads": "about:downloads",
     "chrome://bookmarks": "about:bookmarks",
   };
-
   const chromeDirect = {
     "chrome://dino": "chrome://dino/content/dino.html",
   };
-
   const reverseRedirects = {};
   for (let [chrome, about] of Object.entries(chromeRedirects)) {
     reverseRedirects[about] = chrome;
   }
-
   let lastTypedChrome = null;
-
   function spoofURL(url) {
     if (lastTypedChrome) {
       gURLBar.value = lastTypedChrome;
       lastTypedChrome = null;
       return;
     }
-    if (url.startsWith("about:") && !url.startsWith("about:newtab") && !url.startsWith("about:blank")) {
+    if (url.startsWith("about:") && !url.startsWith("about:newtab") && !url.startsWith("about:blank") && !url.startsWith("about:home")) {
       gURLBar.value = reverseRedirects[url] || url.replace("about:", "chrome://");
     }
   }
-
-  spoofURL(gBrowser.selectedBrowser.currentURI.spec);
-
+  setTimeout(() => spoofURL(gBrowser.selectedBrowser.currentURI.spec), 500);
   gBrowser.addTabsProgressListener({
     onLocationChange(browser, progress, request, location) {
       if (browser === gBrowser.selectedBrowser) {
@@ -38,11 +32,9 @@ window.addEventListener("load", function() {
       }
     }
   });
-
   gBrowser.tabContainer.addEventListener("TabSelect", function() {
-    spoofURL(gBrowser.selectedBrowser.currentURI.spec);
+    setTimeout(() => spoofURL(gBrowser.selectedBrowser.currentURI.spec), 500);
   });
-
   gURLBar.addEventListener("keydown", function(e) {
     if (e.key === "Enter") {
       let val = gURLBar.value.trim();
@@ -50,7 +42,6 @@ window.addEventListener("load", function() {
         e.preventDefault();
         e.stopPropagation();
         gURLBar.view.close();
-
         if (chromeDirect[val]) {
           lastTypedChrome = val;
           gBrowser.loadURI(Services.io.newURI(chromeDirect[val]), {
